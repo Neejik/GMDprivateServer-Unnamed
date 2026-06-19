@@ -46,27 +46,31 @@ class Commands {
 				$query->execute([':starStars' => $starStars, ':starDifficulty' => $starDifficulty, ':starDemon' => $starDemon, ':starAuto' => $starAuto, ':timestamp' => $uploadDate, ':levelID' => $levelID]);
 				$query = $db->prepare("INSERT INTO modactions (type, value, value2, value3, timestamp, account) VALUES ('1', :value, :value2, :levelID, :timestamp, :id)");
 				$query->execute([':value' => $commentarray[1], ':timestamp' => $uploadDate, ':id' => $accountID, ':value2' => $starStars, ':levelID' => $levelID]);
-				if(!empty($starFeatured)) {
-					if($starFeatured > 1) {
-						$query = $db->prepare("INSERT INTO modactions (type, value, value3, timestamp, account) VALUES ('4', :value, :levelID, :timestamp, :id)");
-						$query->execute([':value' => $starFeatured - 1, ':timestamp' => $uploadDate, ':id' => $accountID, ':levelID' => $levelID]);	
-						$query = $db->prepare("UPDATE levels SET starEpic = :starEpic WHERE levelID = :levelID");
-						$query->execute([':starEpic' => $starFeatured - 1, ':levelID' => $levelID]);
-					} elseif($starFeatured == 1) {
-						$query = $db->prepare("INSERT INTO modactions (type, value, value3, timestamp, account) VALUES ('2', :value, :levelID, :timestamp, :id)");
-						$query->execute([':value' => 1, ':timestamp' => $uploadDate, ':id' => $accountID, ':levelID' => $levelID]);	
-						$query = $db->prepare("SELECT starFeatured FROM levels WHERE levelID=:levelID ORDER BY starFeatured DESC LIMIT 1");
-						$query->execute([':levelID' => $levelID]);
-						$featuredID = $query->fetchColumn();
-						if(!$featuredID) {
-							$query = $db->prepare("SELECT starFeatured FROM levels ORDER BY starFeatured DESC LIMIT 1");
-							$query->execute();
-							$featuredID = $query->fetchColumn() + 1;
-						}
-						$query = $db->prepare("UPDATE levels SET starFeatured=:starFeatured WHERE levelID=:levelID");
-						$query->execute([':starFeatured' => $featuredID + 1, ':levelID' => $levelID]);
+				if($starFeatured == 0) {
+					$query = $db->prepare("UPDATE levels SET starFeatured = 0, starEpic = 0 WHERE levelID = :levelID");
+					$query->execute([':levelID' => $levelID]);
+
+					$query = $db->prepare("INSERT INTO modactions (type, value, value3, timestamp, account) VALUES ('2', 0, :levelID, :timestamp, :id)");
+					$query->execute([':timestamp' => $uploadDate, ':id' => $accountID, ':levelID' => $levelID]);
+				} elseif($starFeatured == 1) { // Featured
+					$query = $db->prepare("INSERT INTO modactions (type, value, value3, timestamp, account) VALUES ('2', :value, :levelID, :timestamp, :id)");
+					$query->execute([':value' => 1, ':timestamp' => $uploadDate, ':id' => $accountID, ':levelID' => $levelID]);	
+					$query = $db->prepare("SELECT starFeatured FROM levels WHERE levelID=:levelID ORDER BY starFeatured DESC LIMIT 1");
+					$query->execute([':levelID' => $levelID]);
+					$featuredID = $query->fetchColumn();
+					if(!$featuredID) {
+						$query = $db->prepare("SELECT starFeatured FROM levels ORDER BY starFeatured DESC LIMIT 1");
+						$query->execute();
+						$featuredID = $query->fetchColumn() + 1;
 					}
-				} else $starFeatured = 0;
+					$query = $db->prepare("UPDATE levels SET starFeatured=:starFeatured, starEpic=0 WHERE levelID=:levelID");
+					$query->execute([':starFeatured' => $featuredID + 1, ':levelID' => $levelID]);
+				} elseif($starFeatured > 1) { // Epic/Legendary/Mythic
+					$query = $db->prepare("INSERT INTO modactions (type, value, value3, timestamp, account) VALUES ('4', :value, :levelID, :timestamp, :id)");
+					$query->execute([':value' => $starFeatured - 1, ':timestamp' => $uploadDate, ':id' => $accountID, ':levelID' => $levelID]);	
+					$query = $db->prepare("UPDATE levels SET starEpic = :starEpic, starFeatured = 0 WHERE levelID = :levelID");
+					$query->execute([':starEpic' => $starFeatured - 1, ':levelID' => $levelID]);
+				}
 				if(!empty($starCoins)) {
 					if($starCoins > 1 OR $starCoins < 0) $starCoins = 1;
 					$query = $db->prepare("INSERT INTO modactions (type, value, value3, timestamp, account) VALUES ('3', :value, :levelID, :timestamp, :id)");

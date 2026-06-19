@@ -92,7 +92,7 @@ class Cron {
 				) AS featuredTable ON usersTable.userID = featuredTable.userID
 				LEFT JOIN
 				(
-					SELECT starEpic as epic, userID FROM levels WHERE starEpic != 0 AND isCPShared = 0 GROUP BY(userID) 
+					SELECT SUM(starEpic) AS epic, userID FROM levels WHERE starEpic != 0 AND isCPShared = 0 GROUP BY(userID) 
 				) AS epicTable ON usersTable.userID = epicTable.userID
 			) calculated
 			ON users.userID = calculated.userID
