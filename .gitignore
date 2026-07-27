@@ -44,3 +44,7 @@ Temporary Items
 incl/lib/debug.php
 dashboard/incl/lang/dev/append.php
 dashboard/incl/lang/dev/append.txt
+config/connection.php
+config/connection.php.3306bak
+data/accounts/*
+data/levels/*
